@@ -21,6 +21,8 @@ python3 main.py data/part-1/small --search bfs
 python3 main.py data/part-1/no_obs --search bfs
 python3 main.py data/part-1/open --search bfs
 
+![BFS](https://github.com/amithachari/Search/assets/64373075/d3bc01ba-28a2-4a14-9b8a-9214e21a8edf)
+
 ### A*
 Implementation as a function astar_single(_:) in search.py with the following signature:
 
@@ -34,6 +36,8 @@ Test implementation by running main.py as follows, replacing data/part-2/small a
 
 python3 main.py data/part-2/tiny --search astar_single
 
+![Astar](https://github.com/amithachari/Search/assets/64373075/0a7d3735-9ee7-4e5e-93af-8407f945a540)
+
 ### A* for Multiple Waypoints
 Now, consider the more general and harder problem of finding the shortest path through a maze while hitting multiple waypoints. Problem is to solve different mazes using A* search with an appropriate admissible heuristic that takes into account the multiple waypoints.
 
@@ -43,3 +47,5 @@ def astar_multiple(maze):
 Test implementation by running main.py as follows, replacing data/part-3/small as needed:
 
 python3 main.py data/part-3/tiny --search astar_multiple
+
+![Astar_multiple](https://github.com/amithachari/Search/assets/64373075/2e5834dc-6aa1-4b0d-a3c6-d9731da9dc9d)
