@@ -1,0 +1,216 @@
+def astar_multiple(maze):
+    start_pos = maze.start
+
+    waypoints = maze.waypoints
+
+    # Map to keep track of the visited positions and distance so far
+    visited = dict()
+
+    # queue to keep track of nodes to be visited
+    frontier = list()
+
+    # keeps track of the cost so far, the current node and the parent
+    start_node = MazeNode(priority=0, pos=start_pos, cost_so_far=0, parent_state=None,
+                          waypoints_to_be_reached=waypoints)
+    heapq.heappush(frontier, start_node)
+
+    start_state = MazeState(pos=start_pos, waypoints_to_be_reached=waypoints)
+
+    # Add the state and node to the visited dictionary
+    visited[start_pos] = start_node
+
+    # Keeps track of the last waypoint to trace back from
+    last_waypoint = None
+
+    # Map to keep track of heuristic.
+    mst_map = dict()
+    mst_map[start_state.waypoints_to_be_reached] = MST(start_state.waypoints_to_be_reached).compute_mst_weight()
+
+
+    while (frontier):
+        curr_node = heapq.heappop(frontier)
+        curr_state = MazeState(curr_node.pos, curr_node.waypoints_to_be_reached)
+
+        if not curr_node.waypoints_to_be_reached:
+            last_waypoint = curr_state
+            break
+
+        for neighbor in maze.neighbors(curr_node.pos[0], curr_node.pos[1]):
+            new_waypoints = list()
+            new_waypoints += curr_node.waypoints_to_be_reached
+
+            if neighbor in new_waypoints:
+                new_waypoints.remove(neighbor)
+
+            if tuple(new_waypoints) not in mst_map:
+                mst_map[tuple(new_waypoints)] = mst_manhattan_dist(tuple(new_waypoints))
+
+
+            heuristic_cost = mst_map[tuple(new_waypoints)] + find_closest_goal(neighbor, new_waypoints)
+
+            node = MazeNode(priority=curr_node.cost_so_far + 1 + heuristic_cost, pos=neighbor,
+                            cost_so_far=curr_node.cost_so_far + 1, parent_state=curr_state,
+                            waypoints_to_be_reached=new_waypoints)
+
+            maze_state = MazeState(node.pos, node.waypoints_to_be_reached)
+
+            if (maze_state not in visited or visited[maze_state].cost_so_far > node.cost_so_far):
+                heapq.heappush(frontier, node)
+                visited[maze_state] = node
+
+    path_to_goal = list()
+
+    curr_cell = visited[last_waypoint]
+
+    while (curr_cell.parent_state):
+        path_to_goal.append(curr_cell.pos)
+        curr_cell = visited[curr_cell.parent_state]
+
+    path_to_goal.append(start_pos)
+    path_to_goal.reverse()
+
+    return path_to_goal
+
+
+
+
+
+
+def astar_single(maze):
+    """
+    Runs A star for part 2 of the assignment.
+
+    @param maze: The maze to execute the search on.
+
+    @return path: a list of tuples containing the coordinates of each state in the computed path
+    """
+    def manhattan_cost(end, neighbor):
+        cost = abs(end[0] - neighbor[0]) + abs(end[1] - neighbor[1])
+        return cost
+
+    frontier = []
+    visited = {}
+    cost = {}
+
+    start = maze.start
+    end = maze.waypoints[0]
+    heapq.heappush(frontier,(0.0 + manhattan_cost(end,start), maze.start))
+    visited[start] = None
+    cost[start] = 0
+    path = deque()
+
+    while len(frontier) > 0 or frontier[0][0] != end:
+        current = heapq.heappop(frontier)[1]
+        if current == end:
+            break
+
+
+        for neighbor in maze.neighbors(current[0], current[1]):
+            new_cost = cost[current] + 1 + manhattan_cost(end, neighbor)
+
+            if neighbor not in cost or new_cost < cost[neighbor]:
+                heapq.heappush(frontier,(new_cost,neighbor))
+                visited[neighbor] = current
+                cost[neighbor] = cost[current] + 1
+
+    current = maze.waypoints[0]
+
+    while current != None:
+        path.append(current)
+        current = visited[current]
+
+    path.reverse()
+
+    return path
+
+
+
+def astar_multiple(maze):
+    """
+    Runs A star for part 3 of the assignment in the case where there are
+    multiple objectives.
+
+    @param maze: The maze to execute the search on.
+
+    @return path: a list of tuples containing the coordinates of each state in the computed path
+    """
+
+    pqyu = []
+    waypos = []
+    start = maze.start
+    endy = list(maze.waypoints)
+
+    gstart = 0
+
+    curpos = start
+    visited = {start: start}
+    visited2 = {start: start}
+    viscount = {start: 0}
+    numcount = {start: 0}
+    waydict = {}
+    wayf = {}
+    finalpath = deque()
+    poop = MST(endy)
+    wayMST = MST.compute_mst_weight(poop)
+    endo = 0
+    finalpath2 = deque()
+
+    for short in endy:  # Finds the closest waypoint
+        waynum = abs(short[0] - start[0]) + abs(short[1] - start[1])  # Manhattan Dist from start to each waypoint
+        waydict[short] = waynum  # Sets dictionary values for waypoints based on current pos
+        wayf[short] = waynum + wayMST
+    curendpos2 = min(waydict)
+    fstart = gstart + waydict[curendpos2] + wayMST
+    heapq.heappush(pqyu, (fstart, start))
+    startpos = start
+
+    while len(endy) > 0:
+        curpos = heapq.heappop(pqyu)[1]
+
+        if endo == 0:  # If there's no waypoint being found
+            endo = 1  # Do not search again for a new waypoint until this one's done
+            waydict = {}  # Resets waypoint dictionary
+            wayf = {}
+
+        if curpos in endy:  # If the current position is a waypoint
+            curpos2 = curpos
+            while curpos2 != startpos:
+                finalpath.appendleft(curpos2)
+                curpos2 = visited[curpos2]
+
+            finalpath2.extend(finalpath)
+
+            finalpath = deque()
+            startpos = curpos
+            endy.remove((curpos))  # Removes end position from endy
+            ways = MST(endy)  # MST with new endy values
+            wayMST = MST.compute_mst_weight(ways)  # Calc new weight values
+
+            endo = 0  # Waypoint found
+            visited = {curpos: curpos}
+            viscount = {curpos: 0}
+            pqyu = []
+           
+        neigh = maze.neighbors(curpos[0], curpos[1])
+
+        for allneigh in neigh:
+            for short in endy:  # Finds the closest waypoint
+                waynum = abs(short[0] - allneigh[0]) + abs(short[1] - allneigh[1])  # Manhattan Dist from current pos for each waypoint
+                waydict[short] = waynum  # Sets dictionary values for waypoints based on current pos Unnecessary?
+                #wayf[short] = waynum + wayMST
+            cure = min(waydict)
+            fvalue = waydict[cure] + wayMST + numcount[curpos] + 1
+
+            if allneigh not in visited or viscount[allneigh] > fvalue:
+                heapq.heappush(pqyu, (fvalue, allneigh))
+                visited[allneigh] = curpos
+                visited2[allneigh] = curpos
+                viscount[allneigh] = fvalue
+                numcount[allneigh] = numcount[curpos] + 1
+
+        if len(endy) == 0:
+            return finalpath2
+
+    return []
+
+
